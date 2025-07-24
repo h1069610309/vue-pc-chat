@@ -1,26 +1,31 @@
-name: 打包 vue-pc-chat
+name: 打包 vue-pc-chat (Windows 版本)
 
 on: workflow_dispatch
 
 jobs:
-  build:
-    runs-on: windows-latest  # 更改运行环境为 Windows
-
+  build-windows:
+    runs-on: windows-latest  # 使用 Windows 环境打包 Windows 应用更适配
     steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js 14.18.x
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4  # 建议同步升级 checkout 到最新版
+
+      - name: 使用 Node.js 14.18.x
+        uses: actions/setup-node@v4  # 升级 setup-node 到 v4
         with:
           node-version: 14.18.x
-      - run: npm install node-gyp@8.3.0
-      - run: npm ci
+          cache: 'npm'  # 自动缓存 npm 依赖，加速安装
 
-      # 保留 Windows 打包步骤，移除 macOS 和 Linux 相关步骤
+      - run: npm install node-gyp@8.3.0
+      - run: npm ci  # 安装依赖（ci 比 install 更严格，依赖 package-lock.json）
+
+      # 只保留 Windows 相关的打包命令
       - run: npm run cross-package-win
       - run: npm run cross-package-win32
 
-      # 仅上传 Windows 安装包
-      - uses: actions/upload-artifact@v3
+      # 升级上传 artifact 到 v4 版本（解决 deprecation 警告）
+      - name: 上传 Windows 打包产物
+        uses: actions/upload-artifact@v4  # 关键：从 v3 升级到 v4
         with:
+          name: vue-pc-chat-windows  # 给产物命名，方便识别
           path: |
-            dist_electron/*.exe
+            dist_electron/*.exe  # 只保留 Windows 格式的产物
+          retention-days: 30  # 可选：设置产物保留天数（默认 90 天）
